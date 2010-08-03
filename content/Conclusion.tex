@@ -1,0 +1,16 @@
+\chapter{Conclusion}
+
+\begin{quote}
+{\itshape
+Dealing with failure is easy: Work hard to improve. Success is also easy to handle: You've solved the wrong problem. Work hard to improve.
+}
+
+\hspace{1em}---Alan Perlis \cite{Per82}\\
+\end{quote}
+
+\noindent
+This work's probably most significant result is that it shows how a reliable web service with atomic data consistency can be easily composed from RESTful base objects that use multiversion concurrency control.
+
+However, there is still a lot of work to be done to make CouchDBCP mature enough to be usable in production systems. Once this has been achieved, there should be a good starting point to include data partitioning support, so everything that is necessary to scale CouchDB web services would be made available in one component.
+
+Moreover, it will be interesting to discover further systems and application domains where principles and concepts described in this work can be applied, in order to develop similar solutions to the same problems. Conversely, there are systems, for instance Riak, that are subject to further study, in order to learn from their solutions to problems such as health monitoring or data partitioning.

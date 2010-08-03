@@ -1,0 +1,62 @@
+\chapter{Introduction}
+
+\begin{quote}
+{\itshape
+The Internet and the Web did not have to exist. They come to us courtesy of misallocated defense money, skunkworks engineering projects, worse-is-better engineering practices, big science, naive liberal idealism, cranky libertarian politics, technofetishism, and the sweat and capital of programmers and investors who thought they'd found an easy way to strike it rich.
+}
+
+\hspace{1em}---Leonard Richardson and Sam Ruby \cite[p.~xviii]{RR07}\\
+\end{quote}
+
+\noindent
+In a new era of media driven web applications, high concurrency, and global availability, companies are increasingly facing problems with upscaling databases to match the actual requirements.
+
+Considerable research and effort has gone into developing the next stage of data storage solutions. For instance, several years ago, Google invested time and effort to figure out how to scale up their data operations \cite{CDG+08}. The result, named \emph{Bigtable}, was the product of research establishing that the way in which data for most Internet applications is used, does not meet the same original set of assumptions that went into the relational SQL\footnote{Structured Query Language; SQL was initially presented as ``structured English query language (SEQUEL)'' in \cite{CB74}.} databases designed in the 70's and 80's.
+
+Researchers gained the fundamental insight that for most, but not all applications, multi-record locking mechanisms are not required, and key integrity can easily be managed on the application level. By designing a very simple columnar data system, it is possible to grow data operation to previously unheard dimensions.
+
+Several years ago, Damien Katz, a former senior developer of the document management framework \emph{Lotus Notes}\footnote{\url{http://www.ibm.com/software/lotus/notesanddomino}}, saw the chance to take his experience with Lotus Notes, and what Google had accomplished with Bigtable, to merge the best features of both with each other. He started to develop \emph{CouchDB}\footnote{\url{http://couchdb.apache.org}}---a schema-less document-oriented database that leverages the distributed computability of Bigtable \cite[p.~8]{Cha09}.\\
+
+\noindent
+{\bf CouchDB.}
+CouchDB is a schema-free document database server licensed under the Open Source Apache License, Version 2.0. It is accessible via an HTTP-based REST\footnote{Representational state transfer; the term describes an architectural style for distributed hypermedia systems. It has been introduced and defined in \cite[p.~76ff]{Fie00}. Architectures or interfaces conforming to the REST constraints are often referred to as being \emph{RESTful}.} application programming interface (API), and featuring robust, incremental peer-to-peer replication with conflict detection and management. It is also queryable and indexable (by creating \emph{Views}), featuring a table-oriented reporting engine that uses JavaScript as a query language.
+
+CouchDB has been designed to efficiently support the quick development of document-centric web-based applications. The other major design goals are scalability (see definition in section \ref{Scalability}), and fault tolerance \cite[p.~4]{ASL10}. Because its design is based on simple, yet well understood core concepts, like e.g.\ HTTP, it should be easy to work with for people having experience with web technologies.
+
+The central data structure in CouchDB are documents, which unlike in the relational data model, are basically self-contained units of data. The format in which documents are stored is JSON\footnote{JavaScript Object Notation; see \cite{rfc4627}}, which is natively compatible with JavaScript. It is possible to add attachments of any type (e.g.\ pictures, movies, or word documents) to a CouchDB document \cite[p.~41]{ASL10}. Because of all the properties mentioned before, CouchDB should be well-suited for document-centric web applications \cite[p.~4]{ASL10}.\\
+
+\noindent
+{\bf Erlang/OTP.}
+CouchDB's implementation language is \emph{Erlang}, and the platform CouchDB has been built upon is \emph{OTP}\footnote{OTP (Open Telecom Platform) is a set of design patterns that support fault tolerance along with libraries that support those design patterns. For most applications, one would not implement any system in Erlang without using the OTP design principles and libraries \cite[p.~16]{LMC10}.}, which is included in any Erlang distribution.
+
+Erlang/OTP is optimized for large scale, highly parallel and available, fault-tolerant applications \cite[p.~12]{Arm07} \cite{Eri09b}. Historically, it has been developed and used primarily at the Swedish telecom company \emph{Ericsson}, but since being publicly released under an Open Source License, it is facing increasing popularity within more and more other organizations \cite[p.~6f]{Arm03} \cite{Eri09a}.
+
+
+\section{Motivation: Consistent CouchDB~Clusters}
+\label{Motivation: Consistent CouchDB Clusters}
+
+This work's motivation is to provide a technique that allows for the creation of CouchDB clusters that selectively guarantee eventual or atomic consistency of data. The purpose is to facilitate the creation of scalable CouchDB web services with guarantees on consistency, availability, and partition tolerance. To the author's best knowledge, no equivalent solution to this problem has been reported or previously recognized.
+
+As the notion of \emph{scaling} (as well as its associated attributes \emph{scalable} and \emph{scalability}) has no generally applicable and accepted definition \cite{Hil90} \cite{DRW06} \cite[p.~145]{ASL10}, a definition that is coherent and valid, at least within the present context, is tried to be made in section \ref{Scalability}.\\
+
+\noindent
+{\bf Scaling CouchDB.}
+To make a database system running on unreliable commodity hardware scalable, while maintaining certain guarantees on \emph{consistency}, \emph{availability}, and \emph{partition tolerance} (see section \ref{Consistency, Availability, Partition Tolerance}), techniques for \emph{data partitioning}, \emph{load balancing}, and \emph{clustering} are required. For a general definition and description of these techniques, see section \ref{Data Partitioning, Load Balancing, Clustering}. A detailed discussion of appropriate techniques and tools, with regard to the creation of a reliable web service with CouchDB, can be found in the problem analysis section (\ref{Problem Analysis}).
+
+
+\section{Background}
+\label{Background}
+
+{\bf Riak.}
+The database system that possibly shares the most similarities with CouchDB is \emph{Riak}\footnote{\url{http://riak.basho.com/}}. Riak was designed with decentralized clustering and partitioning support as primary features. For controlling the number of replicas within a cluster, there is a setting called the ``$N$ value'', which has a cluster-wide default, but can also be set on a per-\emph{bucket} (i.e.\ a collection of Riak objects) level.
+
+The level of consistency among replicas is determined by the client. That is, for each read or write request the client has to supply an $R$ or $W$ value, respectively. The ``$R$ value'' represents the number of replicas that must report success before a write operation is considered complete. Accordingly, the ``$W$ value'' represents the number of replicas that must agree on an object to be retrieved \cite{Bas10a}.\\
+
+\noindent
+{\bf CouchDB Lounge.}
+CouchDB Lounge is a proxy-based partitioning and clustering application for CouchDB \cite{Lou10a}. It contains \emph{dumbproxy}, which is a reverse HTTP proxy module for the web server \emph{nginx}\footnote{\url{http://nginx.org/}}. Dumbproxy manages database partitioning based on a consistent hashing algorithm \cite{Lou10b}, as well as replication. Documents will be replicated in bulk mode, i.e.\ when a certain (configurable) number of updates has accumulated, a replication request is added to a queue \cite{Lou10c}.\\
+
+\noindent
+As opposed to Riak, CouchDB has not been designed with decentralized clustering and partitioning support. However, as CouchDB's API is basically RESTful (see section \ref{RESTful HTTP Interface}), it is possible to provide those features in upper layers on top of CouchDB. It is the REST architectural constraints in particular that enforce the ability of building layered systems with RESTful architectures. CouchDB Lounge provides the very example for that.
+
+CouchDB's push replication feature (see section \ref{Replication and Conflict Management}), as it is also used by CouchDB Lounge, can be used to build decentralized CouchDB clusters with each cluster node continuously replicating its changes to one or more other nodes, thereby guaranteeing \emph{eventual consistency} (see section \ref{Consistency}).

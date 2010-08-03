@@ -1,0 +1,69 @@
+\documentclass[
+	a4paper,
+	12pt,
+	oneside,
+	titlepage,
+	index=totoc,
+%	halfparskip,
+	chapterprefix,
+]{scrbook}
+
+\usepackage{typearea}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+%\usepackage[sc]{mathpazo}
+%\usepackage{tgpagella}
+%\linespread{1.05} % Palatino needs more leading space between lines
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{appendix}
+%\definecolor{LinkColor}{rgb}{0,0,0.1}
+\usepackage[
+	pdfauthor={Klaus Trainer},
+	pdftitle={Bachelor Thesis},
+	pdfkeywords={CouchDB, Document-oriented Database, Quorum System, Reliability, Scalability},
+	pdfsubject={Conception and Implementation of a Reliable Web Service with CouchDB}
+]{hyperref}
+\hypersetup{colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    filecolor=black,
+    menucolor=black,
+    urlcolor=black}
+
+\usepackage{titlesec}
+%% This gives us fun enumeration environments. compactenum will be nice.
+\usepackage{paralist}
+
+\usepackage{ctable}
+
+\usepackage{tikz}
+\usetikzlibrary{mindmap,backgrounds} % LaTeX and plain TeX
+\usetikzlibrary[mindmap] % ConTeXt
+
+\usepackage{listings}
+
+\hyphenation{Erlang SEQUEL semi-struc-tured data-bases}
+
+\include{commands}
+
+\begin{document}
+\pagenumbering{Roman}
+\include{content/Titlepage}
+\include{content/Abstract}
+\include{content/Acknowledgements}
+\include{content/Declaration}
+\tableofcontents
+\listoffigures
+\listoftables
+\clearpage
+\pagenumbering{arabic}
+\include{content/Introduction}
+\include{content/General_Principles_and_Concepts}
+\include{content/Principles_and_Concepts_Characteristic_of_CouchDB}
+\include{content/Conception_and_Implementation_of_a_Reliable_Web_Service_with_CouchDB}
+\include{content/Conclusion}
+\include{content/Appendix}
+\include{content/Bibliography}
+\end{document}

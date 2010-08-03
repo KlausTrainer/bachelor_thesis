@@ -1,0 +1,217 @@
+\chapter{General Principles and Concepts}
+
+\begin{quote}
+{\itshape
+What you can do on one computer is limited, but what you can do with networks of computers becomes unlimited.
+}
+
+\hspace{1em}---Joe Armstrong, creator of the Erlang programming language \cite[p.~20]{Arm07}\\
+\end{quote}
+
+\section{Scalability}
+\label{Scalability}
+
+In section \ref{Motivation: Consistent CouchDB Clusters} it is mentioned that the notion of \emph{scaling} (as well as its associated attributes \emph{scalable} and \emph{scalability}) has no generally applicable and accepted definition \cite{Hil90}. In \cite[p.~145]{ASL10} it is explained that \emph{scaling} does not refer to a specific technique or technology. \emph{Scalability} is rather an attribute of a specific architecture that can vary for each system. According to Joe Stump, lead architect of \emph{Digg}\footnote{\url{http://digg.com}}, which is currently one of the internet's largest content aggregators, ``scaling is specialization'' \cite{Wat08}.
+
+In \cite{DRW06} it is argued that, because of the ``intuitive notion that scalability is related to a system's ability to accommodate the `scaling' of some dimension [...] in a subjective field like scalability, a universal definition should be avoided''. In this context, ``a \emph{dimension} represents some aspects of the application domain (as defined by Jackson \cite{Jac95}) whose scaling affects system behavior''. To judge the extent of a system's scalability, ``stakeholders need a systematic way to understand causes, effects and their relationships''. A system then can be called \emph{scalable}, if it is possible ``to guarantee desired behavior when aspects related to the system vary''.\\
+
+\noindent
+{\bf Example: Determining CouchDB's Scalability.}
+Since CouchDB is a database with a RESTful HTTP interface (see section \ref{RESTful HTTP Interface}), it basically provides two services: reads and writes.
+Thus, there are three general properties that are key to scalability:
+\begin{itemize}
+	\item read requests
+	\item write requests
+	\item data.
+\end{itemize}
+\noindent
+Unlike reads, writes are not cacheable. As a consequence, every write request hits the database's storage backend, which under high load, is most likely to become a bottleneck. Moreover, if multiple servers are used to speedup reads, a write must occur on all servers.
+
+When the amount of data is more than a single server can make sensible use of, a solution is to chop the data into manageable chunks and put each chunk on a separate server \cite[p.~147]{ASL10}. This procedure is called \emph{data partitioning}.
+
+Data partitioning can be used for scaling read/write requests as well as data. However, as the number of nodes in a distributed system increases, the system as a whole becomes increasingly prone to errors. Therefore, techniques for \emph{load balancing} and \emph{clustering} are needed. Explanations on data partitioning, load balancing, and clustering can be found in section \ref{Data Partitioning, Load Balancing, Clustering}.
+
+
+\section{Consistency, Availability, Partition Tolerance}
+\label{Consistency, Availability, Partition Tolerance}
+
+\paragraph{The CAP Theorem}
+In an invited talk at PODC 2000 \cite{Bre00}, Eric Brewer made the conjecture that it is impossible for a web service to provide the following three guarantees:
+\begin{itemize}
+	\item Consistency
+	\item Availability
+	\item Partition Tolerance
+\end{itemize}
+Just about two years later, the conjecture has been proved by Seth Gilbert and Nancy Lynch \cite{GL02}, and meanwhile, it is widely referred to as the \emph{CAP theorem}\footnote{\url{http://en.wikipedia.org/wiki/CAP_Theorem}}.
+
+In their note, Gilbert and Lynch show that it is impossible to reliably provide atomic consistent data when there are partitions in the network. However, it is feasible to achieve any two of the properties: consistency, availability, partition tolerance. These properties, with regard to their respective tradeoffs, are explained in the remainder of this section.
+
+\paragraph{Consistency}
+\label{Consistency}
+In transaction systems (the transaction model is explained in section \ref{Multiversion Concurrency Control}) the term \emph{consistency} is used to describe two different properties.
+
+As defined in the ACID properties (atomicity, consistency, isolation, durability), it relates to failure atomicity and the guarantee that when a transaction is finished the database is in a consistent state.
+
+The other consistency property that shall be explained here, does not describe states, but rather the order of concurrent data operations (i.e., \emph{serializability}, see section \ref{Multiversion Concurrency Control}).\\
+
+\noindent
+{\bf Sequential Consistency.}
+\emph{Sequential consistency} was first defined by Leslie Lamport in \cite{Lam79} as a property that requires that
+\begin{quote}
+the result of any execution is the same as if the operations of all the processors were executed in some sequential order, and the operations of each individual processor appear in this sequence in the order specified by its program.
+\end{quote}
+
+That means that every node of the system sees data operations on the same data object in the same order, whereas the order may be different from the order as defined by the real time (as measured e.g.\ by a global physical clock) of issuing the operations. Instead of a total ordering of data operations, only a partial ordering is needed. The partial ordering is defined by the ``happened before'' relation, and can be imposed by the usage of logical clocks \cite{Lam78}.\\
+
+\noindent
+{\bf Atomic Consistency.}
+\emph{Atomic consistency} (which is also referred to as \emph{strict} consistency) requires that data operations on a concurrently shared data object appear to be executed sequentially, i.e.\ every read always returns the most recently written value.
+
+The notion of \emph{atomicity}, as a consistency property, was formalized in \cite{Lam86} on the basis of a shared data object stored in an
+
+\begin{quote}
+[...] \emph{atomic} register, which is safe and in which reads and writes behave as if they occur in some definite order. In other words, for any execution of the system, there is some way of totally ordering the reads and writes so that the values returned by the reads are the same as if the operations had been performed in that order, with no overlapping.
+\end{quote}
+
+Later, the corresponding correctness condition \emph{linearizability} was introduced by Herlihy and Wing \cite{HW87} \cite{HW90}. The idea of a consistent service can be expressed as the guarantee of linearizability for all read/write operations. 
+
+In contrast to sequential consistency, where there has to be a partial ordering of data operations only, linearizability requires that data operations are totally ordered. A distributed algorithm for synchronizing a system of logical clocks, which can be used to totally order data operations, was first presented by Lamport in \cite{Lam78}.\\
+
+
+\noindent
+{\bf Other Consistency Models.}
+In \cite{Lam86}, Lamport not only formalized the atomic consistency model, but also the weaker \emph{regular} and \emph{safe} consistency models. Their informal description is given as follows:
+
+\begin{quote}
+	The weakest possibility is a \emph{safe} register, in which it is assumed only that a read not concurrent with any write obtains the correct value---that is, the most recently written one. [...]
+
+	The next stronger possibility is a \emph{regular} register, which is safe (a read not concurrent with a write gets the correct value) and in which a read that overlaps a write obtains either the old or new value.
+\end{quote}
+
+It is important to note that all of Lamport's consistency models will only hold for read/write storage abstractions with no partitioning network. That is, for any of these consistency models to hold, the communication links between the storage abstraction's base objects are not allowed to fail.
+
+As soon as a distributed system is of internet scale, network partitions are a given, and hence it is not even possible to guarantee safe consistency. Nonetheless, for possibly partitioning distributed systems, other consistency models are needed. Consequently, Werner Vogels (Amazon CTO and Vice President) described, amongst other consistency models, \emph{weak consistency} and \emph{eventual consistency} \cite{Vog09}:
+
+\begin{quote}
+  \begin{itemize}
+    \item \emph{Weak consistency}. The system does not guarantee that subsequent accesses will return the updated value. A number of conditions need to be met before the value will be returned. The period between the update and the moment when it is guaranteed that any observer will always see the updated value is dubbed the \emph{inconsistency window}.
+    \item \emph{Eventual consistency}. This is a specific form of weak consistency; the storage system guarantees that if no new updates are made to the object, eventually all accesses will return the last updated value. If no failures occur, the maximum size of the inconsistency window can be determined based on factors such as communication delays, the load on the system, and  the number of replicas involved in the replication scheme.
+  \end{itemize}
+\end{quote}
+
+\paragraph{Availability}
+For a distributed system to be continuously available, every client (read/write) request received by a non-failing node in the system must result in a correct response. Modifying this condition to only require \emph{almost all} request to receive a response (i.e.\ probabilistic availability) does not change the result when arbitrary failures occur. For simplicity, one can require 100\% availability \cite{GL02}.
+
+Obviously, the definition of availability does not contain an assertion about time. However, in practice, the notion of correct response is usually qualified by an upper time limit, i.e., any correct response must be received by the requesting client within bounded time. If no response is received within a certain period of time, there is no correct response by definition, which in turn means that the service is unavailable.
+
+\paragraph{Partition Tolerance}
+Availability and atomic consistency are qualified by the need to tolerate
+network partitions. According to \cite{GL02}, ``In order to model partition tolerance, the network will be allowed to lose arbitrarily many messages sent
+from one node to another''. When a network is partitioned, all messages sent
+from nodes in one partition to nodes in another partition are lost. Any pattern
+of message loss can be modeled as a temporary partition that separates the
+communicating nodes at the moment of message loss.
+
+The consistency requirement implies that every response will be of atomic consistency, although arbitrary messages that are sent might not be delivered.
+
+The availability requirement implies that every client request received by a non-failing node in the system must result in a response, although arbitrary messages that are sent may be lost.
+
+To summarize, partition tolerance means that ``No set of failures less than total network failure is allowed to cause the system to respond incorrectly'' \cite{GL02}.
+
+\section{Data Partitioning, Load Balancing, Clustering}
+\label{Data Partitioning, Load Balancing, Clustering}
+
+In his book \emph{Programming Erlang} \cite[p.~175]{Arm07}, Joe Armstrong, creator of the Erlang Programming language, gives a summary of reasons for creating distributed programs:
+
+\begin{quote}
+  \begin{itemize}
+	\item \emph{Performance}\\
+	      We can make our programs go faster by arranging that different
+	      parts of the program are run in parallel on different machines.
+	\item \emph{Reliability}\\
+	      We can make fault-tolerant systems by structuring the system to
+	      run on several machines. If one machine fails, we can continue on
+	      another machine.
+	\item \emph{Scalability}\\
+	      As we scale up an application, sooner or later we will exhaust
+	      the capabilities of even the most powerful machine. At this stage
+	      we have to add more machines to add capacity. Adding a new
+	      machine should be a simple operation that does not require large
+	      changes to the application architecture.
+	\item \emph{Intrinsically distributed application}\\
+	      Many applications are inherently distributed. If we write a
+	      multiuser game or chat system, different users will be scattered
+	      all over the globe. If we have a large number of users in a
+	      particular geographic location, we want to place the computation
+	      resources near the users.
+	\item \emph{Fun}\\
+	      Most of the fun programs that I want to write are distributed.
+	      Many of these involve interaction with people and machines all
+	      over the world.
+  \end{itemize}
+\end{quote}
+
+Data partitioning, load balancing, clustering, and the cited reasons for creating distributed programs are very closely interrelated. While it is probably possible to have fun outside the world of distributed programming, performance, reliability, and scalability cannot be achieved without data partitioning, load balancing, and clustering techniques.\footnote{The question whether it is possible to create high-performance, reliable, and scalable programs without having fun, however, cannot be answered at this point. It has to be subject to further study.}
+
+\paragraph{Data Partitioning}
+{\bf Motivation.} Data partitioning solves the problem of having more data than a single device can hold. Aside from that, data partitioning is also a matter of performance optimization. Until solid-state drives (SSDs) will have replaced customary hard disk drives (HDDs), high seek times causing high latency (and definitively not the disk drives' sequential data throughput rate) are likely to be the limiting factor for overall data throughput.
+
+In \cite{BBC+98}, Bernstein et al.\ noted with respect to that,
+\begin{quote}
+	while disk capacities are improving very quickly, seek times are improving relatively slowly. Hence, the amount of data that can be transferred to main memory during an average seek time is rising very quickly. Put differently, the cost of a seek relative to the transfer of a byte of data is rising quickly. This requires storage architectures that are much more serious about disk arm optimization. Also, ``arm wasting'' architectures, such as RAID 5, may be inappropriate in the future.
+\end{quote}
+
+Spreading different data records across several disk drives decreases the amount of concurrent read/write operations per disk under high load, and hence decreases the average seek time. As a consequence, overall data throughput is increased not only because more data records can be retrieved in parallel, but also through the reduced latency.\\
+
+\noindent
+According to \cite{NCWD84}, "Partitioning in database design is the process of assigning a logical object (relation) from the logical schema of the database to several physical objects (files) in a stored database". There are two classes of data partitioning techniques to differentiate:
+\begin{quote}
+	\emph{Vertical partitioning} subdivides attributes into groups and assigns each group to a physical object. \emph{Horizontal partitioning} subdivides object instances (tuples) into groups, all having the same attributes of the original object. We refer to the physical objects that are a result of vertical or horizontal partitioning as \emph{horizontal} or \emph{vertical} fragments.
+\end{quote}
+
+\vspace{0.5em}
+\noindent
+{\bf Vertical Data Partitioning.} In contrast to relational databases, document-oriented databases (see section \ref{Document-oriented Database}), which basically store semistructured data, by definition have no fixed schema. Hence, no uniform set of attribute types can be assumed, even if documents are of the same document type. As a consequence, it is impractical to do vertical data partitioning in document-oriented databases in most cases.
+
+One exceptional case, in which it could be sensible to do vertical data partitioning, is the existence of special attributes that are already treated differently by the database system. For example, CouchDB has the ability to store document attachments. Document read operations only return a document's body and some of its metadata, whereas references are given to the corresponding attachments. More precisely, there is a metadata field containing a list of all document attachments' metadata including their identifier. Unlike document bodies, attachments need to be replaced in their entirety in order to modify them. In practice, document bodies tend to be quite small and accessed frequently, while attachments are orders of magnitude larger and accessed less frequently (and especially rarely for modification).
+
+Different data properties and access patterns result in a significant discrepancy with regard to storage requirements. Therefore, it can well make sense to optimize in terms of different storage technologies (and hence storage locations). For example, document bodies are designated to be stored on a storage medium optimized for very frequent but small random read/write operations with low latency, while document attachments ought to be stored on a storage medium optimized for less frequent but larger read/write operations with high sequential throughput.\\
+
+\noindent
+{\bf Horizontal Data Partitioning.} A common technique used for horizontal data partitioning, which is implemented e.g.\ in Riak as well as CouchDB Lounge, is \emph{consistent hashing}\footnote{The concept of consistent hashing has been introduced in \cite{KLL+97}. See there for a more comprehensive description and definition.}.
+
+Consistent hashing techniques make sure that each document is stored in a partition that can be statically determined. More precisely, the document identifier is used to compute a hash code. The range of the hash function is divided into equally-sized partitions (also referred to as virtual nodes), and each physical node is assigned one or more virtual nodes. For example, if the hash function's range is divided into 16 partitions and there are four physical nodes, four partitions are assigned to each physical node.
+
+When the number of physical nodes needs to be increased (e.g.\ for load balancing reasons, or because storage volume is hitting a limit), each physical node that contains more than one virtual node can be split, so that virtual nodes become physical nodes. The number of physical nodes can grow up to the number of virtual nodes \cite[p.~166f]{ASL10} \cite{Bas10b}.
+
+\paragraph{Load Balancing}
+One goal of load balancing is to prevent that a single node in a distributed system receives so many requests that it becomes ``swamped''. Besides rendering a single node unusable, too many requests destined to one location can also cause network congestion and therefore a bad effect on nearby nodes \cite{KLL+97}.
+
+Load balancing prevents swamping by equally distributing system load across several physical nodes. It therefore also increases a system's overall performance, because it is able to handle more concurrent requests. In that sense, data partitioning can also be seen as a load balancing technique.
+
+In short, the goals of load balancing are \emph{availability} and \emph{performance}.\\
+
+\noindent
+{\bf Example: Using the Domain Name System for Load Balancing.} The probably simplest and most widely used load balancing technique in the internet makes use of a domain name system (DNS) property and implementation details.
+
+The basic data element in the DNS is a resource record. For example, the resource record of the type \emph{Address} ($A$) maps between a domain name and an IP address. By specifying multiple $A$ records for a particular domain name, multiple IP addresses can be associated with one domain name. Therefore, requests to one domain name can be spread over many physical IP devices, which is load balancing.
+
+When a DNS server receives a resolution request, it sends a list of all addresses associated with the particular domain name back to the requester. For each request, the server changes the order of the addresses supplied in the response, choosing the order randomly or in a sequential ``round robin'' fashion. Most clients usually use the first address in the list returned by the server, so by changing the addresses' order the server ensures that requests are equally distributed to multiple IP addresses \cite[p.~904f]{Koz05}.
+
+The described load balancing approach implies that failover has to be implemented on the client side. In practice that means, when a failure occurs, the client will switch over to a different address under the same domain name to (hopefully) retrieve an available non-failing node, and retry the operation that has been aborted.
+
+\paragraph{Clustering}
+Clustering techniques abstract a set of functionally similar or identical machines, so that it operates as a single system.\footnote{Generally, it is helpful to know that in computer science the term \emph{clustering} is also used in a different way to describe a certain class of data mining techniques, which is no matter of interest in this work.} In that sense, data partitioning and load balancing can be considered as clustering techniques. The use of load balancing as a clustering technique is described e.g.\ in \cite{rfc1794}, where T.\ Brisco noted:
+\begin{quote}
+	Initially; ``load balancing'' was intended to permit the Domain Name
+	System (DNS) [1] agents to support the concept of ``clusters'' (derived
+	from the VMS usage) of machines -- where all machines were
+	functionally similar or the same, and it didn't particularly matter
+	which machine was picked -- as long as the load of the processing was
+	reasonably well distributed across a series of actual different
+	hosts.
+\end{quote}
+
+Brisco was hinting at the fact that the concept of \emph{clusters} goes back to the \emph{VAXclusters} system, which is ``a highly available and extensible configuration of VAX computers that operate as a single system. [...] The software is a distributed version of the VAX/VMS operating system that uses a distributed lock manager to synchronize access to shared resources'' \cite{KLS86}.
+
+Goals behind clustering are to increase a system's overall availability, fault tolerance, and performance. Fault tolerance is achieved by the elimination of single points of failure. Availability is achieved by both hardware and data redundancy, as well as adequate techniques for load balancing and failover. Together with load balancing techniques, data redundancy in turn can be utilized to increase performance.

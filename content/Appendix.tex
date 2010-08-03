@@ -1,0 +1,36 @@
+\appendix
+%\chapter{Example Code}
+\chapter*{Appendix: Code Listing}
+\label{Appendix}
+\addcontentsline{toc}{chapter}{Appendix: Code Listing}
+\chaptermark{Appendix}
+\markboth{Appendix}{Appendix}
+
+\begin{lstlisting}[caption=An Erlang function to find the first response for whose {\tt ETag} header field value (which is a document revision number) a majority exists.]
+find_read_quorum(Responses, N) ->
+    case lists:dropwhile(
+        fun(E) ->
+            {RespCode, ETag, _Header, _Proxy} = E,
+            case lists:filter(
+                fun(E1) ->
+                    {RespCode1, ETag1, _, _} = E1,
+                    case RespCode1 of
+                    RespCode when ETag1 =:= ETag ->
+                        true;
+                    _ ->
+                    false
+                    end
+                end, Responses) of
+            L when length(L) =< N div 2 -> true;
+            _ -> false
+            end
+        end, Responses) of
+    [] ->
+        {error, 503};
+    [H|_] ->
+        case H of
+        {undefined, undefined, _Header, _Proxy} -> {error, 500};
+        _ -> H
+        end
+    end.
+\end{lstlisting}

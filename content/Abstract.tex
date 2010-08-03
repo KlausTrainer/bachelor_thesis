@@ -1,0 +1,11 @@
+\section*{Abstract}
+This work is about developing a reverse proxy server for the document-oriented database \emph{CouchDB}. The objective is a web service that provides clients with the abstraction of a single reliable CouchDB device, using a collection of possibly unreliable CouchDB units. The main difference of the proposed solution in contrast to existing ones is that it selectively guarantees eventual or atomic consistency in the presence of concurrent data operations.
+
+The purpose of this work is to facilitate the development of scalable CouchDB systems with guarantees on consistency, availability, and partition tolerance. Seth Gilbert and Nancy Lynch have proved that in an internet-scale distributed system it is possible to only guarantee either atomic consistency or availability. The interrelation between consistency, availability, and partition tolerance will be discussed with respect to practical tradeoffs.
+
+Furthermore, with regard to the scalability of CouchDB applications, the need for data partitioning, load balancing, and clustering techniques as well as the resulting design considerations are discussed.
+
+   Finally, an implementation of a reverse proxy that serves as an abstraction of a single reliable CouchDB device, will be proposed and evaluated.\\
+
+\paragraph{Keywords}
+CouchDB, Document-oriented Database, Quorum System, Reliability, Scalability

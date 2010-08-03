@@ -1,0 +1,54 @@
+\begin{tikzpicture}
+    \path[mindmap, concept color=red,text=black]
+    node[concept] {CouchDB Cluster}[clockwise from=0]
+    child[concept color=black!25!green] {
+        node[concept] (res) {Crash Resilience}
+        child[concept] { node[concept] {Instance Management} }
+        child[concept] {
+            node[concept] {Gossip Protocol}[clockwise from=-60]
+                child[concept] { node[concept] {Notifica\-tion of Changed Configuration} }
+                child[concept] { node[concept] {Notifica\-tion of Missed Updates} }
+        }
+    }
+    child[concept color=blue!50] {
+        node[concept] (loa) {Load Balancing}[clockwise from=-60]
+        child[concept] { node[concept] (fai) {Health Monitoring} }
+        child[concept] { node[concept] (fai) {Failover} }
+    }
+    child[concept color=green!50!blue] {
+        node[concept] (rel) {Reliability}[clockwise from=-60]
+        child[concept] { node[concept] {Consis\-tency} }
+        child[concept] { node[concept] {Avail\-ability} }
+        child[concept] { node[concept] {Fault Tolerance} }
+    }
+    child[concept color=violet!50] { 
+        node[concept] (no) {No Single Point of Failure}[clockwise from=-120]
+        child[concept] { node[concept] {Decentra\-lization} }
+        child[concept] { node[concept] {Redun\-dancy} }
+    }
+    child[concept color=orange] {
+        node[concept] (mvc) {MVCC}[clockwise from=180]
+        child[concept] { node[concept] {Atomic Consistency}[clockwise from=180]
+            child[concept] { node[concept] {Quorum-based Voting} }
+        }
+        child[concept] { node[concept] {Eventual Consistency} }
+    }
+    child[concept color=gray] {
+        node[concept] (per) {Peer-to-Peer Replication}[clockwise from=60]
+        child[concept] { node[concept] {Conflict Management} }
+    };
+    \begin{pgfonlayer}{background}
+        \draw[circle connection bar switch color=from (white) to (black)]
+            (per) edge (mvc);
+        \draw[circle connection bar switch color=from (black) to (white)]
+            (per) edge (res);
+        \draw[circle connection bar switch color=from (white) to (black)]
+            (rel) edge (res) edge (loa) edge (no) edge (mvc);
+        \draw[<-, line width=6pt]
+            (per) edge (mvc);
+        \draw[->, line width=6pt]
+            (per) edge (res);
+        \draw[<-, line width=6pt]
+            (rel) edge (res) edge (loa) edge (no) edge (mvc);
+    \end{pgfonlayer}
+\end{tikzpicture}
